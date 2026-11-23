@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mission Stock</title>
+<meta name="description" content="Jeu d'exercices sur la valorisation des stocks : PEPS et CMUP.">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --paper:#f5f7fc; --grid:rgba(36,72,168,.07); --card:#ffffff; --ink:#18213b; --muted:#5a6584;
+  --line:#d8deec; --blue:#2448a8; --blue-soft:#e3e9fb; --tag:#ffcd3c; --tag-ink:#3a2c00;
+  --kraft:#c99a5c; --kraft-2:#b4844a; --kraft-ink:#3b2610;
+  --ok:#1d8a4b; --ok-soft:#dcf3e5; --bad:#c7333a; --bad-soft:#fbe1e2; --mix:#7a5cc7;
+  --f-display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0f1428; --grid:rgba(140,170,255,.055); --card:#182040; --ink:#e7ebf7; --muted:#9ba6c6;
+  --line:#2a3560; --blue:#8ea9ff; --blue-soft:#22305e; --tag:#ffd257; --tag-ink:#2f2400;
+  --kraft:#c49a63; --kraft-2:#a87c45; --kraft-ink:#2a1a08;
+  --ok:#4fcb88; --ok-soft:#173a2a; --bad:#ff6d74; --bad-soft:#47202a; --mix:#a98cf0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --paper:#0f1428; --grid:rgba(140,170,255,.055); --card:#182040; --ink:#e7ebf7; --muted:#9ba6c6;
+  --line:#2a3560; --blue:#8ea9ff; --blue-soft:#22305e; --tag:#ffd257; --tag-ink:#2f2400;
+  --kraft:#c49a63; --kraft-2:#a87c45; --kraft-ink:#2a1a08;
+  --ok:#4fcb88; --ok-soft:#173a2a; --bad:#ff6d74; --bad-soft:#47202a; --mix:#a98cf0; color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.5;
+}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--paper)}
+.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0}
+.brand b{font-family:var(--f-display);font-weight:800;font-size:1.25rem;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:8px;background:var(--kraft);position:relative;box-shadow:inset 0 -6px 0 var(--kraft-2)}
+.logo::before{content:"";position:absolute;left:50%;top:0;bottom:6px;width:8px;margin-left:-4px;background:var(--tag);opacity:.9}
+.stats{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:.9rem;white-space:nowrap}
+.pill .num{font-size:.95rem}
+.pill.streak{color:var(--bad)}
+.pill.pop{animation:pop .45s ease}
+@keyframes pop{40%{transform:scale(1.18)}}
+select.pill{appearance:auto;padding-right:6px}
+.iconbtn{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-weight:700;font-size:.9rem}
+
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center;padding-block:34px 18px}
+.hero h1{font-size:clamp(2.3rem,6vw,4rem);font-weight:800;letter-spacing:-.03em}
+.hero h1 .tagword{display:inline-block;background:var(--tag);color:var(--tag-ink);padding:0 .25em;border-radius:6px;transform:rotate(-2deg)}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:52ch}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;background:var(--blue);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25);transition:transform .1s}
+:root[data-theme="dark"] .btn{color:#0f1428}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#0f1428}}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn.tag{background:var(--tag);color:var(--tag-ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hero-shelf{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.hero-shelf .lbl{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+
+.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:30px 0 12px;flex-wrap:wrap}
+.section-h h2{font-size:1.6rem;font-weight:800}
+.section-h span{color:var(--muted)}
+.missions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.mcard{position:relative;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s, box-shadow .15s}
+.mcard:not(:disabled):hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(20,30,70,.12)}
+.mcard:disabled{cursor:not-allowed}
+.mcard:disabled .sign,.mcard:disabled .mbody{opacity:.45}
+.sign{padding:14px 16px 12px;background:var(--sc,var(--blue));color:#fff;position:relative}
+.sign::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:repeating-linear-gradient(90deg,var(--sc,var(--blue)) 0 18px,transparent 18px 36px)}
+.sign small{display:block;font-weight:700;opacity:.85;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase}
+.sign h3{font-size:1.2rem;font-weight:800;color:#fff}
+.mbody{padding:18px 16px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.mbody p{margin:0;color:var(--muted);font-size:.95rem}
+.mfoot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:6px}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--blue-soft);color:var(--blue)}
+.chip.cmup{background:color-mix(in srgb,var(--mix) 18%,transparent);color:var(--mix)}
+.chip.duel{background:color-mix(in srgb,var(--tag) 35%,transparent);color:var(--ink)}
+.stars{letter-spacing:2px;font-size:1.05rem;color:var(--line)}
+.stars .on{color:#e8a500}
+.lock{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.35);color:#fff;font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:999px}
+
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.mode h3{font-size:1.25rem;font-weight:800}
+.mode p{margin:0;color:var(--muted)}
+.mode .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.badge{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center}
+.badge .medal{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;background:var(--line);color:var(--muted);font-size:.95rem}
+.badge.on{border-style:solid;border-color:#e8a500}
+.badge.on .medal{background:linear-gradient(145deg,#ffd86b,#e8a500);color:#3a2c00}
+.badge b{display:block;font-size:.92rem;line-height:1.2}
+.badge small{color:var(--muted);font-size:.78rem;line-height:1.25;display:block}
+
+.mhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:18px 8px}
+.mhead h2{font-size:clamp(1.4rem,3.5vw,2rem);font-weight:800}
+.mhead .story{flex-basis:100%;color:var(--muted);margin:0;max-width:75ch}
+.progress{flex-basis:100%;height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .4s}
+.mgrid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:18px;align-items:start;margin-top:10px}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+.qcard{background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:20px;position:relative;box-shadow:5px 5px 0 var(--tag)}
+.qcard .qk{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--muted)}
+.qcard h3{font-size:1.3rem;font-weight:700;margin:4px 0 12px}
+.qcard.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.answer{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+.answer .field{flex:1 1 160px;display:flex;align-items:center;border:2px solid var(--line);border-radius:12px;background:var(--paper);padding:0 12px}
+.answer .field:focus-within{border-color:var(--blue)}
+.answer input{flex:1;min-width:0;border:0;background:transparent;font-family:var(--f-num);font-size:1.3rem;padding:10px 0;color:var(--ink);outline:none}
+.answer .unit{color:var(--muted);font-weight:700;white-space:nowrap}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:11px 14px;font-weight:700}
+.choice:hover:not(:disabled){border-color:var(--blue)}
+.choice.good{border-color:var(--ok);background:var(--ok-soft)}
+.choice.badc{border-color:var(--bad);background:var(--bad-soft)}
+.qtools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.linkbtn{background:none;border:0;color:var(--blue);font-weight:700;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+.feedback{margin-top:14px;border-radius:12px;padding:12px 14px;font-size:.98rem}
+.feedback.hint{background:color-mix(in srgb,var(--tag) 25%,transparent)}
+.feedback.ok{background:var(--ok-soft)}
+.feedback.ko{background:var(--bad-soft)}
+.feedback .calc{font-family:var(--f-num);font-size:.92rem;margin-top:6px;line-height:1.7}
+.feedback .calc b{color:var(--ok)}
+.stamp{position:absolute;top:-14px;right:16px;font-family:var(--f-display);font-weight:800;font-size:1.05rem;letter-spacing:.08em;border:3px solid currentColor;border-radius:8px;padding:2px 10px;transform:rotate(8deg);background:var(--card);animation:stamp .35s cubic-bezier(.2,1.6,.4,1)}
+.stamp.ok{color:var(--ok)} .stamp.ko{color:var(--bad)}
+@keyframes stamp{from{transform:rotate(8deg) scale(2.2);opacity:0}}
+.gain{font-family:var(--f-num);font-weight:700;color:var(--ok)}
+.next-row{display:flex;justify-content:flex-end;margin-top:14px}
+
+.shelf{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.shelf-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.shelf-h b{font-family:var(--f-display);font-size:1.05rem}
+.shelf-h small{color:var(--muted)}
+.rack{display:flex;align-items:flex-end;gap:6px;min-height:96px;padding:0 6px 8px;border-bottom:8px solid var(--kraft-2);position:relative;flex-wrap:wrap}
+.door{align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-right:4px;writing-mode:vertical-rl;transform:rotate(180deg)}
+.box{position:relative;min-width:64px;height:84px;border-radius:6px;background:var(--kraft);color:var(--kraft-ink);padding:8px 8px 6px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 -10px 0 var(--kraft-2);transition:all .35s;animation:drop .45s ease}
+@keyframes drop{from{transform:translateY(-30px);opacity:0}}
+.box::before{content:"";position:absolute;left:50%;top:0;height:30%;width:14px;margin-left:-7px;background:rgba(255,255,255,.28)}
+.box .q{font-family:var(--f-num);font-weight:700;font-size:1rem;position:relative}
+.box .p{font-family:var(--f-num);font-size:.78rem;background:var(--tag);color:var(--tag-ink);padding:1px 6px;border-radius:4px;align-self:flex-start;position:relative;white-space:nowrap}
+.box .d{font-size:.7rem;opacity:.8;position:relative}
+.box.first{outline:3px solid var(--blue);outline-offset:2px}
+.box.take{outline:3px dashed var(--bad);outline-offset:2px;animation:wob 1s infinite}
+@keyframes wob{50%{transform:translateY(-4px)}}
+.box.mixed{background:linear-gradient(135deg,var(--kraft),color-mix(in srgb,var(--mix) 55%,var(--kraft)));box-shadow:inset 0 -10px 0 color-mix(in srgb,var(--mix) 40%,var(--kraft-2))}
+.box.incoming{opacity:.85;border:2px dashed var(--kraft-2);background:transparent;color:var(--ink);box-shadow:none}
+.op-sign{align-self:center;font-family:var(--f-display);font-weight:800;font-size:1.5rem;color:var(--muted);padding:0 2px}
+.empty-rack{color:var(--muted);font-style:italic;align-self:center;padding:20px}
+.shelf .legend,.hero-shelf .legend{margin-top:10px;font-size:.88rem;color:var(--muted)}
+
+.fiche{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 0 6px}
+.fiche-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 16px 10px;flex-wrap:wrap}
+.fiche-h b{font-family:var(--f-display);font-size:1.1rem}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.86rem}
+th,td{border:1px solid var(--line);padding:5px 7px;vertical-align:top}
+thead th{background:var(--blue-soft);color:var(--ink);font-weight:700;font-size:.78rem;text-align:center}
+thead tr:first-child th{font-family:var(--f-display);font-size:.85rem;letter-spacing:.04em;text-transform:uppercase}
+td.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n div+div{border-top:1px dotted var(--line)}
+td.lbl{white-space:nowrap}
+tr.future td{color:var(--muted);opacity:.55}
+tr.current{background:color-mix(in srgb,var(--tag) 14%,transparent)}
+tr.current td:first-child{box-shadow:inset 4px 0 0 var(--tag)}
+.ask{display:inline-block;min-width:44px;text-align:center;background:var(--tag);color:var(--tag-ink);font-weight:700;border-radius:5px;padding:0 6px;animation:blink 1.3s infinite}
+@keyframes blink{50%{opacity:.55}}
+tr.flash td{animation:flash 1s}
+@keyframes flash{from{background:var(--ok-soft)}}
+tr.total td{font-weight:700;background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.fiche .note{padding:8px 16px 4px;color:var(--muted);font-size:.85rem}
+
+.quiz{max-width:720px;margin:24px auto 0}
+.timer{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0 16px}
+.timer i{display:block;height:100%;background:var(--tag);width:100%}
+.vf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vf .choice{text-align:center;font-size:1.1rem;padding:16px}
+
+.memo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
+.memo article{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.memo h3{font-size:1.4rem;font-weight:800;margin-bottom:6px}
+.memo .formula{font-family:var(--f-num);background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem}
+.memo ul{padding-left:20px;margin:8px 0}
+.memo .wide{grid-column:1/-1}
+.cmp{width:100%;min-width:0;font-size:.95rem}
+.cmp td,.cmp th{padding:8px}
+
+.overlay{position:fixed;inset:0;background:rgba(8,12,30,.55);display:grid;place-items:center;z-index:50;padding:16px}
+.modal{background:var(--card);border-radius:20px;max-width:440px;width:100%;padding:26px;text-align:center;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--tag);animation:drop .4s}
+.modal h2{font-size:1.8rem;font-weight:800}
+.modal .big-stars{font-size:2.6rem;letter-spacing:6px;color:var(--line);margin:8px 0}
+.modal .big-stars .on{color:#e8a500}
+.modal p{color:var(--muted)}
+.modal .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(92vw,420px)}
+.toast{background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);animation:drop .35s;display:flex;gap:10px;align-items:center}
+.toast .medal{width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,#ffd86b,#e8a500);color:#3a2c00;display:grid;place-items:center;font-size:.8rem;flex:none}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .missions,.modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mgrid{grid-template-columns:minmax(0,1fr)}
+  .memo{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .missions,.modes{grid-template-columns:minmax(0,1fr)}
+  .stats{margin-left:0;width:100%}
+  .vf{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head><body>
+
+<header class="top">
+  <div class="wrap">
+    <button class="brand" id="homeBtn" aria-label="Retour à l'accueil"><span class="logo" aria-hidden="true"></span><b>Mission Stock</b></button>
+    <div class="stats">
+      <span class="pill" id="ptsPill" title="Points"><span class="num" id="pts">0</span> pts</span>
+      <span class="pill streak" id="streakPill" title="Bonnes réponses d'affilée">Série <span class="num" id="streak">0</span></span>
+      <span class="pill" title="Badges gagnés">Badges <span class="num" id="nbBadges">0</span>/9</span>
+      <select class="pill" id="cur" aria-label="Monnaie"><option>€</option><option>FCFA</option><option>DH</option><option>$</option></select>
+      <button class="iconbtn" id="soundBtn" aria-pressed="true">Son : oui</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const sum = a => a.reduce((s, x) => s + x, 0);
+const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let CUR = '€';
+const fmt = (x, d = 2) => Number(x).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const money = x => fmt(x) + ' ' + CUR;
+const qn = x => Number(x).toLocaleString('fr-FR');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function parseNum(s) {
+  s = String(s).trim().replace(/[\s  ]/g, '').replace(/[^\d,.\-]/g, '');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(',', '.');
+  return s === '' ? NaN : parseFloat(s);
+}
+const $ = id => document.getElementById(id);
+
+function labelOf(op) { return op.l || ({ SI: 'Stock initial', E: 'Achat', S: 'Vente' })[op.t]; }
+
+function simulate(method, ops, unit) {
+  const rows = [], snaps = [], steps = [];
+  if (method === 'PEPS') {
+    let lots = [];
+    ops.forEach((op, i) => {
+      const row = { d: op.d, l: labelOf(op), t: op.t, q: op.q, pu: op.pu, inL: [], outL: [], stL: [] };
+      if (op.t === 'SI' || op.t === 'E') {
+        const mt = r2(op.q * op.pu);
+        if (op.t === 'E') {
+          row.inL.push([op.q, op.pu, mt]);
+          steps.push({ op: i, kind: 'auto', reveal: true, k: 'Livraison',
+            prompt: `${qn(op.q)} ${unit} arrivent à ${money(op.pu)} l'unité.`,
+            text: `Avec PEPS, chaque livraison forme un <b>nouveau lot</b> rangé <b>derrière</b> les anciens. On ne mélange pas les prix : il y a maintenant ${lots.length + 1} lot${lots.length ? 's' : ''} sur l'étagère.` });
+        }
+        lots.push({ q: op.q, pu: op.pu, d: op.d });
+      } else {
+        let need = op.q; const used = [];
+        while (need > 0) {
+          const l = lots[0]; const take = Math.min(need, l.q);
+          used.push([take, l.pu, r2(take * l.pu), l.d]);
+          l.q -= take; need -= take; if (l.q === 0) lots.shift();
+        }
+        const cost = r2(sum(used.map(u => u[2])));
+        row.outL = used.map(u => [u[0], u[1], u[2]]);
+        const takeIdx = used.map((_, k) => k);
+        steps.push({ op: i, kind: 'num', reveal: true, k: 'Sortie de stock',
+          prompt: `Combien coûte la sortie de ${qn(op.q)} ${unit} du ${op.d} ?`, unit: CUR, answer: cost, take: takeIdx,
+          hint: `On vide d'abord le lot le plus ancien : ${qn(used[0][0] + (snapQ(snaps, i, 0) - used[0][0]))} ${unit} à ${money(used[0][1])}. ${used.length > 1 ? 'Il ne suffit pas, on complète avec le lot suivant.' : 'Il suffit à lui seul.'}`,
+          explain: used.map(u => `${qn(u[0])} × ${money(u[1])} = ${money(u[2])} <small>(lot du ${u[3]})</small>`).join('<br>') + (used.length > 1 ? `<br>Total = <b>${money(cost)}</b>` : `<br>Coût de la sortie = <b>${money(cost)}</b>`) });
+      }
+      row.stL = lots.map(l => [l.q, l.pu, r2(l.q * l.pu)]);
+      rows.push(row); snaps.push(lots.map(l => ({ ...l })));
+    });
+    const fin = r2(sum(lots.map(l => l.q * l.pu)));
+    const finQ = sum(lots.map(l => l.q));
+    const finalStep = { op: 'end', kind: 'num', k: 'Stock final', unit: CUR, answer: fin,
+      prompt: `Quelle est la valeur du stock final (${qn(finQ)} ${unit}) ?`,
+      hint: `Additionne la valeur de chaque lot encore sur l'étagère (quantité × prix du lot).`,
+      explain: lots.map(l => `${qn(l.q)} × ${money(l.pu)} = ${money(r2(l.q * l.pu))}`).join('<br>') + `<br>Stock final = <b>${money(fin)}</b>` };
+    return { rows, snaps, steps, finalStep, final: fin, finalQ: finQ, totalOut: r2(sum(rows.flatMap(r => r.outL.map(x => x[2])))) };
+  }
+  let Q = 0, V = 0, c = 0;
+  ops.forEach((op, i) => {
+    const row = { d: op.d, l: labelOf(op), t: op.t, q: op.q, pu: op.pu, inL: [], outL: [], stL: [] };
+    if (op.t === 'SI') { Q = op.q; c = op.pu; V = r2(Q * c); }
+    else if (op.t === 'E') {
+      const mt = r2(op.q * op.pu), Q0 = Q, V0 = V, c0 = c;
+      const nV = r2(V + mt), nQ = Q + op.q; c = r2(nV / nQ); Q = nQ; V = r2(Q * c);
+      row.inL.push([op.q, op.pu, mt]);
+      steps.push({ op: i, kind: 'num', reveal: true, k: 'Entrée : nouveau CMUP', unit: CUR + ' / unité', answer: c, tol: 0.011, prev: { Q: Q0, c: c0, V: V0 }, inc: { q: op.q, pu: op.pu },
+        prompt: `${qn(op.q)} ${unit} arrivent à ${money(op.pu)}. Quel est le nouveau CMUP ?`,
+        hint: `CMUP = (valeur du stock + valeur de l'entrée) ÷ (quantité en stock + quantité entrée). Arrondis au centime.`,
+        explain: `Valeur : ${money(V0)} + ${money(mt)} = ${money(nV)}<br>Quantité : ${qn(Q0)} + ${qn(op.q)} = ${qn(nQ)}<br>CMUP = ${fmt(nV)} ÷ ${qn(nQ)} = <b>${money(c)}</b>` });
+    } else {
+      const mt = r2(op.q * c); Q -= op.q; V = r2(Q * c);
+      row.outL.push([op.q, c, mt]);
+      steps.push({ op: i, kind: 'num', reveal: true, k: 'Sortie de stock', unit: CUR, answer: mt,
+        prompt: `Combien vaut la sortie de ${qn(op.q)} ${unit} du ${op.d} ?`,
+        hint: `Une sortie part toujours au CMUP du moment : ${money(c)}. Et le CMUP ne change pas après une sortie.`,
+        explain: `${qn(op.q)} × ${money(c)} = <b>${money(mt)}</b>` });
+    }
+    row.stL = [[Q, c, V]];
+    rows.push(row); snaps.push([{ q: Q, pu: c, d: op.d, mixed: true }]);
+  });
+  const finalStep = { op: 'end', kind: 'num', k: 'Stock final', unit: CUR, answer: V,
+    prompt: `Quelle est la valeur du stock final (${qn(Q)} ${unit}) ?`,
+    hint: `Quantité restante × dernier CMUP.`,
+    explain: `${qn(Q)} × ${money(c)} = <b>${money(V)}</b>` };
+  return { rows, snaps, steps, finalStep, final: V, finalQ: Q, totalOut: r2(sum(rows.flatMap(r => r.outL.map(x => x[2])))) };
+}
+function snapQ(snaps, i, k) { const s = snaps[i - 1]; return s && s[k] ? s[k].q : 0; }
+
+const MISSIONS = [
+  { id: 'farine', shop: 'La boulangerie de Léa', product: 'Sacs de farine', unit: 'sacs', color: '#c0602a', phases: ['PEPS'],
+    story: 'Léa fait ses croissants avec des sacs de farine de 25 kg. Elle range les sacs livrés derrière les anciens et utilise toujours les plus vieux en premier : c\'est la méthode PEPS.',
+    ops: [{ t: 'SI', d: '01/03', q: 20, pu: 15 }, { t: 'E', d: '05/03', q: 30, pu: 18 }, { t: 'S', d: '10/03', q: 15, l: 'Bon de sortie fournil' }],
+    extra: [{ phase: 0, before: 2, k: 'Réfléchis', prompt: 'Les 15 sacs du 10/03 sortent de quel lot ?', options: ['Du lot du 01/03 à 15 €', 'Du lot du 05/03 à 18 €', 'Moitié dans chaque lot'], answer: 0, explain: 'PEPS = Premier Entré, Premier Sorti. Le lot du 01/03 est le plus ancien et contient 20 sacs : il suffit pour en sortir 15.' }] },
+  { id: 'jus', shop: 'Le kiosque de Moussa', product: 'Bouteilles de jus de bissap', unit: 'bouteilles', color: '#b8324f', phases: ['CMUP'],
+    story: 'Moussa verse toutes ses bouteilles dans le même frigo : impossible de savoir laquelle vient de quelle livraison. Il valorise donc au coût moyen, recalculé après chaque achat.',
+    ops: [{ t: 'SI', d: '01/04', q: 100, pu: 2 }, { t: 'E', d: '03/04', q: 300, pu: 2.4 }, { t: 'S', d: '08/04', q: 250 }],
+    extra: [{ phase: 0, before: 1, k: 'Réfléchis', prompt: 'Avec le CMUP après chaque entrée, quand recalcule-t-on le coût moyen ?', options: ['À chaque entrée', 'À chaque sortie', 'Une seule fois en fin d\'année'], answer: 0, explain: 'Le CMUP change uniquement quand une entrée apporte un nouveau prix. Une sortie retire des unités au CMUP du moment, sans le modifier.' }] },
+  { id: 'ramettes', shop: 'Papeterie Plume', product: 'Ramettes de papier A4', unit: 'ramettes', color: '#2f7d6d', phases: ['PEPS'],
+    story: 'C\'est la rentrée : les ramettes partent vite. Attention, une grosse commande va vider un lot entier et piocher dans le suivant.',
+    ops: [{ t: 'SI', d: '01/09', q: 40, pu: 4 }, { t: 'E', d: '03/09', q: 60, pu: 4.5 }, { t: 'S', d: '06/09', q: 70, l: 'Commande lycée' }, { t: 'E', d: '10/09', q: 50, pu: 5 }, { t: 'S', d: '14/09', q: 45 }],
+    extra: [{ phase: 0, before: 2, k: 'Réfléchis', prompt: 'On doit sortir 70 ramettes, mais le lot le plus ancien n\'en contient que 40. Que fait-on ?', options: ['On prend les 40, puis 30 dans le lot suivant', 'On prend les 70 dans le lot le plus récent', 'On calcule un prix moyen des deux lots'], answer: 0, explain: 'Avec PEPS, on vide complètement le lot le plus ancien puis on continue dans le lot suivant. La sortie a donc deux prix différents.' }] },
+  { id: 'sneakers', shop: 'Sneakers Station', product: 'Paires de baskets', unit: 'paires', color: '#3c47b5', phases: ['CMUP'],
+    story: 'Deux livraisons, deux ventes : le CMUP va bouger deux fois. Garde bien le dernier CMUP en tête pour valoriser chaque vente.',
+    ops: [{ t: 'SI', d: '01/05', q: 20, pu: 50 }, { t: 'E', d: '04/05', q: 30, pu: 60 }, { t: 'S', d: '09/05', q: 25 }, { t: 'E', d: '15/05', q: 25, pu: 64 }, { t: 'S', d: '22/05', q: 30 }],
+    extra: [{ phase: 0, before: 2, k: 'Réfléchis', prompt: 'Après la vente du 09/05, le CMUP…', options: ['reste à 56,00', 'baisse', 'augmente'], answer: 0, explain: 'Une sortie ne change jamais le CMUP. Seules les entrées le recalculent.' }] },
+  { id: 'mangues', shop: 'L\'étal de Fatou', product: 'Cageots de mangues', unit: 'cageots', color: '#d08a00', phases: ['PEPS'],
+    story: 'Des mangues, ça s\'abîme : Fatou vend toujours les cageots les plus anciens d\'abord. Un mois complet avec trois livraisons et trois ventes.',
+    ops: [{ t: 'SI', d: '01/06', q: 50, pu: 10 }, { t: 'E', d: '04/06', q: 40, pu: 12 }, { t: 'S', d: '08/06', q: 60 }, { t: 'E', d: '12/06', q: 80, pu: 11 }, { t: 'S', d: '18/06', q: 70 }, { t: 'E', d: '22/06', q: 20, pu: 13 }, { t: 'S', d: '28/06', q: 50 }] },
+  { id: 'cafe', shop: 'Le duel du Café Arabica', product: 'Sacs de café vert', unit: 'sacs', color: '#5b3a29', phases: ['PEPS', 'CMUP'],
+    story: 'Le prix du café grimpe : 100, puis 120, puis 130 € le sac. Tu remplis la même fiche avec les deux méthodes, puis tu compares. Qui gagne ?',
+    ops: [{ t: 'SI', d: '01/10', q: 10, pu: 100 }, { t: 'E', d: '05/10', q: 30, pu: 120 }, { t: 'S', d: '12/10', q: 20 }, { t: 'E', d: '20/10', q: 20, pu: 130 }],
+    extra: [
+      { phase: 'end', k: 'Duel', prompt: 'Les prix montent. Quelle méthode donne le stock final le plus élevé ?', options: ['PEPS', 'CMUP', 'Les deux donnent pareil'], answer: 0, cmp: true, explain: 'Stock final : PEPS {F0}, CMUP {F1}. Avec PEPS, le stock restant est valorisé aux prix les plus récents, donc les plus chers quand les prix montent.' },
+      { phase: 'end', k: 'Duel', prompt: 'Et quelle méthode donne le coût des sorties le plus élevé, donc le bénéfice le plus faible ?', options: ['PEPS', 'CMUP', 'Les deux donnent pareil'], answer: 1, cmp: true, explain: 'Sorties : PEPS {O0}, CMUP {O1}. PEPS sort d\'abord les vieux lots, les moins chers. Le CMUP mélange anciens et nouveaux prix, donc ses sorties coûtent plus cher.' }] }
+];
+
+function buildMission(m) {
+  const phases = m.phases.map(meth => ({ method: meth, sim: simulate(meth, m.ops, m.unit) }));
+  const steps = [];
+  const fill = s => s.replace('{F0}', money(phases[0].sim.final)).replace('{F1}', money(phases[1] ? phases[1].sim.final : 0))
+    .replace('{O0}', money(phases[0].sim.totalOut)).replace('{O1}', money(phases[1] ? phases[1].sim.totalOut : 0));
+  phases.forEach((ph, pi) => {
+    const extra = (m.extra || []).filter(e => e.phase === pi);
+    ph.sim.steps.forEach(s => {
+      extra.filter(e => e.before === s.op).forEach(e => steps.push({ ...e, phase: pi, kind: 'choice', op: s.op }));
+      steps.push({ ...s, phase: pi });
+    });
+    steps.push({ ...ph.sim.finalStep, phase: pi });
+  });
+  (m.extra || []).filter(e => e.phase === 'end').forEach(e => steps.push({ ...e, phase: phases.length - 1, kind: 'choice', op: 'end', explain: fill(e.explain) }));
+  return { phases, steps };
+}
+
+const SHOPS = [
+  ['Épicerie Nour', 'Sacs de riz de 5 kg', 'sacs', '#2f7d6d'], ['Librairie du Coin', 'Cahiers grand format', 'cahiers', '#3c47b5'],
+  ['Pharma Plus', 'Boîtes de gants', 'boîtes', '#1f7fa8'], ['Garage Rapide', 'Bidons d\'huile moteur', 'bidons', '#5d5d6e'],
+  ['Fleuriste Iris', 'Pots d\'orchidées', 'pots', '#b8324f'], ['Tech Shop', 'Chargeurs USB-C', 'chargeurs', '#4a3cb5'],
+  ['Quincaillerie Bolt', 'Boîtes de vis', 'boîtes', '#8a5a2b'], ['Boutique Wax', 'Coupons de tissu', 'coupons', '#c0602a']];
+function genDefi(method) {
+  const [shop, product, unit, color] = pick(SHOPS);
+  const month = String(rand(1, 12)).padStart(2, '0'); let day = 1;
+  const dd = () => { const s = String(day).padStart(2, '0') + '/' + month; day += rand(2, 4); return s; };
+  let pu = rand(6, 40) + pick([0, 0, 0.5]); let stock = rand(2, 10) * 10;
+  const ops = [{ t: 'SI', d: dd(), q: stock, pu }];
+  const n = rand(2, 3);
+  for (let k = 0; k < n; k++) {
+    const q = rand(2, 8) * 10; pu = Math.max(1, pu + pick([-1, 0.5, 1, 1.5, 2, 2.5, 3]));
+    ops.push({ t: 'E', d: dd(), q, pu }); stock += q;
+    let s = Math.max(5, Math.round(stock * (0.3 + Math.random() * 0.5) / 5) * 5); s = Math.min(s, stock - 5);
+    ops.push({ t: 'S', d: dd(), q: s }); stock -= s;
+  }
+  const meth = method === 'X' ? pick(['PEPS', 'CMUP']) : method;
+  return { id: 'defi', defi: true, shop, product, unit, color, phases: [meth], ops,
+    story: `Exercice tiré au hasard : ${product.toLowerCase()} chez ${shop}, méthode ${meth}. Les prix et les quantités changent à chaque partie.` };
+}
+
+const QUIZ = [
+  ['PEPS signifie « Premier Entré, Premier Sorti ».', ['Vrai', 'Faux'], 0, 'On l\'appelle aussi FIFO en anglais : First In, First Out.'],
+  ['Avec PEPS, les sorties sont valorisées au prix des lots les plus récents.', ['Vrai', 'Faux'], 1, 'Non : on sort d\'abord les lots les plus anciens, à leur prix d\'achat.'],
+  ['Avec le CMUP après chaque entrée, le coût moyen est recalculé à chaque achat.', ['Vrai', 'Faux'], 0, 'Chaque entrée apporte un nouveau prix, donc un nouveau coût moyen.'],
+  ['Une sortie de stock modifie le CMUP.', ['Vrai', 'Faux'], 1, 'Une sortie retire des unités au CMUP du moment. Le coût moyen reste le même.'],
+  ['Quand les prix montent, PEPS donne un stock final plus élevé que le CMUP.', ['Vrai', 'Faux'], 0, 'Le stock restant est valorisé aux derniers prix, les plus chers.'],
+  ['Quand les prix montent, le CMUP donne des sorties moins chères que PEPS.', ['Vrai', 'Faux'], 1, 'C\'est l\'inverse : PEPS sort d\'abord les vieux lots, les moins chers.'],
+  ['Stock : 100 u à 4. Entrée : 100 u à 6. Quel est le CMUP ?', ['5,00', '4,00', '6,00', '10,00'], 0, '(400 + 600) ÷ 200 = 5,00'],
+  ['PEPS. Stock : 10 u à 2, puis 10 u à 3. On sort 15 u. Coût de la sortie ?', ['35,00', '37,50', '40,00', '30,00'], 0, '10 × 2 + 5 × 3 = 35,00'],
+  ['CMUP = (valeur du stock + valeur de l\'entrée) ÷ (quantité en stock + quantité entrée).', ['Vrai', 'Faux'], 0, 'C\'est exactement la formule du CMUP après chaque entrée.'],
+  ['Avec PEPS, le stock final est valorisé aux prix des derniers achats.', ['Vrai', 'Faux'], 0, 'Les vieux lots sont sortis en premier, il reste donc les plus récents.'],
+  ['Le CMUP de fin de période se calcule une seule fois, avec le stock initial et toutes les entrées de la période.', ['Vrai', 'Faux'], 0, 'Toutes les sorties de la période partent alors à ce même coût moyen.'],
+  ['Quelle méthode suit chaque lot séparément, avec son propre prix ?', ['PEPS', 'CMUP', 'Aucune'], 0, 'PEPS garde les lots séparés. Le CMUP les fond en un seul prix moyen.'],
+  ['Si le prix d\'achat ne change jamais, PEPS et CMUP donnent le même résultat.', ['Vrai', 'Faux'], 0, 'Tous les lots ont le même prix : les deux méthodes coïncident.'],
+  ['CMUP = 12. On sort 25 unités. Valeur de la sortie ?', ['300,00', '275,00', '312,00', '250,00'], 0, '25 × 12 = 300,00'],
+  ['La fiche de stock suit les quantités et les valeurs des entrées, des sorties et du stock.', ['Vrai', 'Faux'], 0, 'Trois blocs : Entrées, Sorties, Stock, avec quantité, prix unitaire et montant.'],
+  ['Stock : 50 u à 10. Entrée : 150 u à 14. Quel est le CMUP ?', ['13,00', '12,00', '14,00', '11,50'], 0, '(500 + 2 100) ÷ 200 = 13,00'],
+  ['PEPS. Stock : 20 u à 8, puis 30 u à 9. On sort 20 u. Que reste-t-il ?', ['30 u à 9', '20 u à 8 et 10 u à 9', '30 u à 8,60'], 0, 'Les 20 u du premier lot sortent en entier. Il reste le lot à 9.'],
+  ['Pour des produits périssables (fruits, médicaments), quelle logique physique colle le mieux ?', ['PEPS', 'CMUP'], 0, 'On écoule les plus anciens en premier pour éviter les pertes.']
+];
+
+const KEY = 'missionstock-v1';
+let P = { pts: 0, streak: 0, best: 0, done: {}, badges: [], defiWins: 0, cur: '€', sound: true };
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) P = { ...P, ...s }; } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+CUR = P.cur || '€';
+
+const BADGES = [
+  ['premier', '1er', 'Premier calcul', 'Une première réponse juste'],
+  ['serie5', 'x5', 'En rythme', '5 bonnes réponses d\'affilée'],
+  ['serie10', 'x10', 'Inarrêtable', '10 bonnes réponses d\'affilée'],
+  ['parfait', '3★', 'Sans faute', 'Une mission avec 3 étoiles'],
+  ['peps', 'PE', 'Pro du PEPS', 'Finir les 3 missions PEPS'],
+  ['cmup', 'CM', 'Pro du CMUP', 'Finir les 2 missions CMUP'],
+  ['duel', 'VS', 'Arbitre', 'Finir le duel PEPS contre CMUP'],
+  ['quiz', 'QZ', 'Éclair', '8/10 ou plus au quiz éclair'],
+  ['defi', 'DÉ', 'Joueur', 'Réussir 3 défis aléatoires']];
+function award(id) {
+  if (P.badges.includes(id)) return;
+  P.badges.push(id); save();
+  const b = BADGES.find(x => x[0] === id);
+  toast(`<span class="medal">${b[1]}</span><span>Badge gagné : ${b[2]}</span>`);
+  chime([660, 880, 1100]); updateStats();
+}
+function checkBadges() {
+  if (P.streak >= 5) award('serie5');
+  if (P.streak >= 10) award('serie10');
+  if (['farine', 'ramettes', 'mangues'].every(k => P.done[k])) award('peps');
+  if (['jus', 'sneakers'].every(k => P.done[k])) award('cmup');
+  if (P.done.cafe) award('duel');
+  if (Object.values(P.done).some(s => s === 3)) award('parfait');
+  if (P.defiWins >= 3) award('defi');
+}
+function updateStats(popPts) {
+  $('pts').textContent = qn(P.pts); $('streak').textContent = P.streak; $('nbBadges').textContent = P.badges.length;
+  if (popPts) { const el = $('ptsPill'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+}
+function toast(html) {
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = html; $('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+let AC = null;
+function chime(freqs, type = 'sine') {
+  if (!P.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach((f, i) => {
+      const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f;
+      const t0 = AC.currentTime + i * 0.09; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+      o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + 0.3);
+    });
+  } catch (e) {}
+}
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = $('confetti'), cx = cv.getContext('2d'); cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ['#ffcd3c', '#2448a8', '#1d8a4b', '#c7333a', '#c99a5c', '#7a5cc7'];
+  const ps = Array.from({ length: 140 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .4, vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 4, r: Math.random() * 6.28, vr: (Math.random() - .5) * .3, c: pick(cols), w: 6 + Math.random() * 6 }));
+  const t0 = performance.now();
+  (function f(t) {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .05; p.r += p.vr; cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.w / 4, p.w, p.w / 2); cx.restore(); });
+    if (t - t0 < 2800) requestAnimationFrame(f); else cx.clearRect(0, 0, cv.width, cv.height);
+  })(t0);
+}
+
+const app = $('app');
+let G = null;
+let quizTimer = null;
+
+function starsHtml(n) { return [1, 2, 3].map(i => `<span class="${i <= n ? 'on' : ''}">★</span>`).join(''); }
+function methodChip(ph) { return ph.length > 1 ? '<span class="chip duel">PEPS vs CMUP</span>' : `<span class="chip ${ph[0] === 'CMUP' ? 'cmup' : ''}">${ph[0]}</span>`; }
+
+function home() {
+  clearInterval(quizTimer); G = null; location.hash = '';
+  const unlocked = i => i === 0 || P.done[MISSIONS[i - 1].id] || P.done[MISSIONS[i].id];
+  app.innerHTML = `
+  <section class="hero">
+    <div>
+      <h1>Tiens la boutique, <span class="tagword">compte juste.</span></h1>
+      <p>Six commerces t'attendent. Range les livraisons, sors la marchandise et remplis la fiche de stock avec les méthodes PEPS et CMUP. Chaque réponse est corrigée tout de suite, calcul à l'appui.</p>
+      <div class="hero-actions">
+        <button class="btn" data-go="mission:${nextMissionIdx()}">${Object.keys(P.done).length ? 'Continuer' : 'Commencer la mission 1'}</button>
+        <button class="btn ghost" data-go="memo">Revoir la leçon</button>
+      </div>
+    </div>
+    <div class="hero-shelf" aria-label="Exemple d'étagère PEPS">
+      <div class="lbl">Exemple PEPS : le plus ancien sort en premier</div>
+      ${rackHtml([{ q: 20, pu: 15, d: '01/03' }, { q: 30, pu: 18, d: '05/03' }], 'PEPS', { first: true })}
+      <div class="legend">Sortie de 25 sacs : 20 × 15 + 5 × 18 = ${money(390)}</div>
+    </div>
+  </section>
+
+  <div class="section-h"><h2>Les missions</h2><span>${Object.keys(P.done).length}/6 terminées</span></div>
+  <div class="missions">
+    ${MISSIONS.map((m, i) => `
+      <button class="mcard" style="--sc:${m.color}" data-go="mission:${i}" ${unlocked(i) ? '' : 'disabled'}>
+        ${unlocked(i) ? '' : '<span class="lock">Verrouillée</span>'}
+        <div class="sign"><small>Mission ${i + 1}</small><h3>${esc(m.shop)}</h3></div>
+        <div class="mbody">
+          <p>${esc(m.product)} · ${m.ops.length} opérations</p>
+          <div class="mfoot">${methodChip(m.phases)}<span class="stars">${starsHtml(P.done[m.id] || 0)}</span></div>
+        </div>
+      </button>`).join('')}
+  </div>
+
+  <div class="section-h"><h2>Pour s'entraîner encore</h2></div>
+  <div class="modes">
+    <div class="mode"><h3>Défi aléatoire</h3><p>Un commerce et des chiffres tirés au hasard. Une infinité d'exercices.</p>
+      <div class="row"><button class="btn" data-go="defi:PEPS">PEPS</button><button class="btn" data-go="defi:CMUP">CMUP</button><button class="btn tag" data-go="defi:X">Surprise</button></div></div>
+    <div class="mode"><h3>Quiz éclair</h3><p>10 questions, 20 secondes chacune. Plus tu réponds vite, plus tu marques.</p>
+      <div class="row"><button class="btn" data-go="quiz">Lancer le quiz</button></div></div>
+    <div class="mode"><h3>Mémo</h3><p>Les deux méthodes en une page, avec les formules et un exemple comparé.</p>
+      <div class="row"><button class="btn ghost" data-go="memo">Ouvrir le mémo</button></div></div>
+  </div>
+
+  <div class="section-h"><h2>Tes badges</h2><span>Meilleure série : ${P.best}</span></div>
+  <div class="badges">${BADGES.map(b => `<div class="badge ${P.badges.includes(b[0]) ? 'on' : ''}"><span class="medal">${b[1]}</span><div><b>${b[2]}</b><small>${b[3]}</small></div></div>`).join('')}</div>
+  <p style="margin-top:22px"><button class="linkbtn" id="resetBtn">Remettre ma progression à zéro</button></p>`;
+  $('resetBtn').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.sure) { P = { ...P, pts: 0, streak: 0, best: 0, done: {}, badges: [], defiWins: 0 }; save(); updateStats(); home(); }
+    else { b.dataset.sure = '1'; b.textContent = 'Clique encore pour confirmer'; }
+  };
+  scrollTo(0, 0);
+}
+function nextMissionIdx() { const i = MISSIONS.findIndex(m => !P.done[m.id]); return i < 0 ? 0 : i; }
+
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-go]'); if (!b || b.disabled) return;
+  const [k, v] = b.dataset.go.split(':');
+  if (k === 'mission') startMission(MISSIONS[+v], +v);
+  else if (k === 'defi') startMission(genDefi(v), -1, v);
+  else if (k === 'quiz') startQuiz();
+  else if (k === 'memo') memo();
+  else if (k === 'home') home();
+});
+
+function rackHtml(lots, method, o = {}) {
+  if (!lots.length || !lots.some(l => l.q > 0)) return `<div class="rack"><span class="empty-rack">Étagère vide</span></div>`;
+  const maxQ = Math.max(...lots.map(l => l.q), o.inc ? o.inc.q : 0);
+  const box = (l, cls = '') => `<div class="box ${cls}" style="flex:${(0.6 + l.q / maxQ).toFixed(2)} 1 0">
+      <span class="q">${qn(l.q)}</span><span class="p">${l.pu === null ? '? ' + CUR : money(l.pu)}</span><span class="d">${l.d || ''}</span></div>`;
+  let h = `<div class="rack">${method === 'PEPS' ? '<span class="door">sortie</span>' : ''}`;
+  h += lots.map((l, i) => box(l, (method === 'CMUP' ? 'mixed ' : '') + (o.first && i === 0 ? 'first ' : '') + (o.take && o.take.includes(i) ? 'take' : ''))).join('');
+  if (o.inc) h += `<span class="op-sign">+</span>${box({ q: o.inc.q, pu: o.inc.pu, d: 'entrée' }, 'incoming')}`;
+  return h + '</div>';
+}
+
+function startMission(m, idx, defiMethod) {
+  clearInterval(quizTimer);
+  const b = buildMission(m);
+  G = { m, idx, defiMethod, phases: b.phases, steps: b.steps, i: 0, tries: 0, hint: false, errors: 0, gained: 0, answered: false,
+    revealed: b.phases.map(() => new Set(m.ops.map((o, k) => o.t === 'SI' ? k : -1).filter(k => k >= 0))), finalDone: b.phases.map(() => false), flash: null };
+  location.hash = idx >= 0 ? 'mission-' + (idx + 1) : 'defi';
+  renderMission(); scrollTo(0, 0);
+}
+
+function curStep() { return G.steps[G.i]; }
+
+function renderMission() {
+  const m = G.m, s = curStep(), ph = G.phases[s.phase], meth = ph.method;
+  const pct = Math.round(100 * G.i / G.steps.length);
+  app.innerHTML = `
+    <div class="mhead">
+      <button class="btn ghost" data-go="home">← Missions</button>
+      ${methodChip(m.phases)}
+      <h2>${esc(m.shop)}</h2>
+      <p class="story">${esc(m.story)}</p>
+      <div class="progress" aria-label="Progression"><i style="width:${pct}%"></i></div>
+    </div>
+    <div class="mgrid">
+      <div class="col">
+        <div class="qcard" id="qcard">${questionHtml(s)}</div>
+        <div class="shelf">${shelfHtml(s, ph)}</div>
+      </div>
+      <div class="col"><div class="fiche">${ficheHtml(s)}</div></div>
+    </div>`;
+  bindQuestion(s);
+}
+
+function shelfHtml(s, ph) {
+  const meth = ph.method, sim = ph.sim, rev = G.revealed[s.phase];
+  const last = Math.max(...rev);
+  let lots = sim.snaps[last];
+  const o = {};
+  if (meth === 'PEPS') {
+    o.first = true;
+    if (s.kind === 'num' && s.take && (G.hint || G.answered)) o.take = s.take;
+  } else if (s.kind === 'num' && s.inc && !G.answered) {
+    o.inc = { q: s.inc.q, pu: s.inc.pu };
+  }
+  const tot = sum(lots.map(l => l.q));
+  const legend = meth === 'PEPS'
+    ? 'Chaque carton est un lot avec son propre prix. Le lot encadré, le plus ancien, sort en premier.'
+    : 'Tout est mélangé dans un seul stock, valorisé au coût moyen (CMUP). Une entrée change le prix moyen, une sortie non.';
+  return `<div class="shelf-h"><b>L'étagère · ${meth}</b><small>${qn(tot)} ${esc(G.m.unit)} en stock</small></div>
+    ${rackHtml(lots, meth, o)}<div class="legend">${legend}</div>`;
+}
+
+function cellLines(lines, cols, ask) {
+  if (ask) return cols.map(c => `<td class="n">${c === null ? '<span class="ask">?</span>' : c}</td>`).join('');
+  if (!lines.length) return '<td class="n"></td><td class="n"></td><td class="n"></td>';
+  return [0, 1, 2].map(k => `<td class="n">${lines.map(l => `<div>${k === 0 ? qn(l[0]) : fmt(l[k])}</div>`).join('')}</td>`).join('');
+}
+
+function ficheHtml(s) {
+  const pi = s.phase, ph = G.phases[pi], sim = ph.sim, rev = G.revealed[pi], meth = ph.method;
+  const curOp = typeof s.op === 'number' ? s.op : -1;
+  const rows = sim.rows.map((r, i) => {
+    const shown = rev.has(i);
+    const cls = shown ? (G.flash === i ? 'flash' : '') : (i === curOp ? 'current' : 'future');
+    let inC, outC, stC;
+    if (shown) { inC = cellLines(r.inL); outC = cellLines(r.outL); stC = cellLines(r.stL); }
+    else {
+      const isCur = i === curOp;
+      if (r.t === 'E') inC = cellLines(r.inL);
+      else inC = cellLines([]);
+      if (r.t === 'S') outC = isCur ? cellLines(null, [qn(r.q), meth === 'CMUP' ? null : '', null], true) : `<td class="n">${qn(r.q)}</td><td class="n"></td><td class="n"></td>`;
+      else outC = cellLines([]);
+      stC = isCur ? cellLines(null, [null, null, null], true) : cellLines([]);
+    }
+    return `<tr class="${cls}"><td>${r.d}</td><td class="lbl">${esc(r.l)}</td>${inC}${outC}${stC}</tr>`;
+  }).join('');
+  const fin = G.finalDone[pi];
+  const isFinal = s.op === 'end' && s.kind === 'num';
+  const totalRow = (fin || isFinal) ? `<tr class="total ${fin && G.flash === 'end' ? 'flash' : ''}"><td colspan="11" style="text-align:right">Stock final</td><td class="n">${qn(sim.finalQ)}</td><td class="n"></td><td class="n">${fin ? fmt(sim.final) : '<span class="ask">?</span>'}</td></tr>` : '';
+  const note = meth === 'CMUP' ? 'CMUP arrondi au centime. Valeur du stock = quantité × CMUP.' : 'Avec PEPS, une ligne par lot dans les colonnes Sorties et Stock.';
+  return `<div class="fiche-h"><b>Fiche de stock · ${esc(G.m.product)}</b><span class="chip ${meth === 'CMUP' ? 'cmup' : ''}">${meth}${G.phases.length > 1 ? ` · manche ${pi + 1}/2` : ''}</span></div>
+    <div class="tscroll"><table>
+      <thead><tr><th rowspan="2">Date</th><th rowspan="2">Libellé</th><th colspan="3">Entrées</th><th colspan="3">Sorties</th><th colspan="3">Stock</th></tr>
+      <tr><th>Qté</th><th>PU</th><th>Montant</th><th>Qté</th><th>PU</th><th>Montant</th><th>Qté</th><th>PU</th><th>Montant</th></tr></thead>
+      <tbody>${rows}${totalRow}</tbody></table></div>
+    <div class="note">Montants en ${CUR}. ${note}</div>`;
+}
+
+function questionHtml(s) {
+  const total = G.steps.length;
+  const head = `<div class="qk">Étape ${G.i + 1}/${total} · ${esc(s.k || '')}</div><h3>${s.prompt}</h3>`;
+  if (s.kind === 'auto') return head + `<p>${s.text}</p><div class="next-row"><button class="btn" id="goBtn">Ranger sur l'étagère →</button></div>`;
+  if (s.kind === 'choice') return head + `<div class="choices">${s.options.map((o, k) => `<button class="choice" data-k="${k}">${esc(o)}</button>`).join('')}</div><div id="fb"></div>`;
+  return head + `<form class="answer" id="ansForm" autocomplete="off">
+      <label class="field"><input id="ans" inputmode="decimal" placeholder="Ta réponse" aria-label="Ta réponse"><span class="unit">${esc(s.unit || '')}</span></label>
+      <button class="btn" type="submit">Vérifier</button></form>
+    <div class="qtools"><button class="linkbtn" id="hintBtn" type="button">Un indice ?</button></div><div id="fb"></div>`;
+}
+
+function bindQuestion(s) {
+  G.answered = false; G.tries = 0; G.hint = false;
+  if (s.kind === 'auto') { $('goBtn').onclick = () => { chime([520, 700]); finishStep(s, 0); }; $('goBtn').focus({ preventScroll: true }); return; }
+  if (s.kind === 'choice') {
+    app.querySelectorAll('.choice').forEach(b => b.onclick = () => {
+      if (G.answered) return; G.answered = true;
+      const k = +b.dataset.k, ok = k === s.answer;
+      app.querySelectorAll('.choice').forEach(c => { c.disabled = true; if (+c.dataset.k === s.answer) c.classList.add('good'); });
+      if (!ok) b.classList.add('badc');
+      const pts = ok ? scoreGood(50) : scoreBad();
+      showFeedback(ok, s.explain, pts);
+    });
+    return;
+  }
+  const inp = $('ans'); inp.focus({ preventScroll: true });
+  $('hintBtn').onclick = () => { if (G.answered) return; G.hint = true; $('fb').innerHTML = `<div class="feedback hint"><b>Indice :</b> ${s.hint}</div>`; refreshShelf(s); };
+  $('ansForm').onsubmit = e => {
+    e.preventDefault(); if (G.answered) return;
+    const v = parseNum(inp.value);
+    if (isNaN(v)) { $('fb').innerHTML = `<div class="feedback hint">Écris un nombre, par exemple <span class="num">${fmt(123.45)}</span>.</div>`; return; }
+    const tol = s.tol != null ? s.tol : Math.max(0.05, Math.abs(s.answer) * 0.002);
+    const ok = Math.abs(v - s.answer) <= tol;
+    G.tries++;
+    if (ok) {
+      G.answered = true; inp.disabled = true;
+      const base = G.tries === 1 ? (G.hint ? 70 : 100) : 50;
+      showFeedback(true, s.explain, scoreGood(base));
+    } else if (G.tries === 1) {
+      const q = $('qcard'); q.classList.remove('shake'); void q.offsetWidth; q.classList.add('shake');
+      chime([220, 180], 'triangle'); G.hint = true;
+      $('fb').innerHTML = `<div class="feedback ko"><b>Pas tout à fait.</b> Tu as encore un essai.<br><b>Indice :</b> ${s.hint}</div>`;
+      refreshShelf(s); inp.select();
+    } else {
+      G.answered = true; inp.disabled = true;
+      showFeedback(false, s.explain, scoreBad(), `La bonne réponse était <b class="num">${fmt(s.answer)}</b> et tu as écrit <span class="num">${fmt(v)}</span>.`);
+    }
+  };
+}
+function refreshShelf(s) { const sh = app.querySelector('.shelf'); if (sh) sh.innerHTML = shelfHtml(s, G.phases[s.phase]); }
+
+function scoreGood(base) {
+  P.streak++; P.best = Math.max(P.best, P.streak);
+  const bonus = Math.min(50, (P.streak - 1) * 10);
+  const g = base + bonus; P.pts += g; G.gained += g; save(); updateStats(true);
+  award('premier'); checkBadges(); chime([660, 990]);
+  return g;
+}
+function scoreBad() { P.streak = 0; G.errors++; save(); updateStats(); chime([200, 150], 'triangle'); return 0; }
+
+function showFeedback(ok, explain, pts, extra = '') {
+  const q = $('qcard');
+  q.insertAdjacentHTML('beforeend', `<span class="stamp ${ok ? 'ok' : 'ko'}">${ok ? 'JUSTE' : 'À REVOIR'}</span>`);
+  $('fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'ko'}">
+      ${ok ? `<b>Bravo !</b> <span class="gain">+${pts} pts</span>${P.streak > 1 ? ` · série de ${P.streak}` : ''}` : `<b>Correction.</b> ${extra}`}
+      <div class="calc">${explain}</div></div>
+    <div class="next-row"><button class="btn" id="nextBtn">${G.i + 1 < G.steps.length ? 'Suivant →' : 'Voir mon score'}</button></div>`;
+  const hb = $('hintBtn'); if (hb) hb.remove();
+  const s = curStep();
+  if (s.kind === 'num' && (s.reveal || s.op === 'end')) {
+    applyReveal(s); const f = app.querySelector('.fiche'); if (f) f.innerHTML = ficheHtml(s);
+  }
+  refreshShelf(s);
+  $('nextBtn').onclick = () => finishStep(s, 1);
+  $('nextBtn').focus({ preventScroll: true });
+}
+function applyReveal(s) {
+  if (s.op === 'end') { G.finalDone[s.phase] = true; G.flash = 'end'; }
+  else if (s.reveal) { G.revealed[s.phase].add(s.op); G.flash = s.op; }
+}
+function finishStep(s) {
+  applyReveal(s);
+  G.i++;
+  if (G.i >= G.steps.length) return endMission();
+  const n = curStep();
+  if (n.phase !== s.phase) { G.flash = null; toast(`Manche 2 : même fiche, méthode ${G.phases[n.phase].method}`); }
+  renderMission();
+  const q = $('qcard'); if (q && q.getBoundingClientRect().top < 60) q.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function endMission() {
+  const m = G.m, stars = G.errors === 0 ? 3 : G.errors <= 2 ? 2 : 1;
+  if (m.defi) { if (G.errors <= 2) P.defiWins++; }
+  else P.done[m.id] = Math.max(P.done[m.id] || 0, stars);
+  save(); checkBadges(); updateStats();
+  confetti(); chime([523, 659, 784, 1046]);
+  const nextIdx = G.idx >= 0 && G.idx + 1 < MISSIONS.length ? G.idx + 1 : -1;
+  const cmp = G.phases.length > 1 ? `<table class="cmp" style="margin-top:10px"><tr><th></th><th>PEPS</th><th>CMUP</th></tr>
+      <tr><td>Coût des sorties</td><td class="n">${money(G.phases[0].sim.totalOut)}</td><td class="n">${money(G.phases[1].sim.totalOut)}</td></tr>
+      <tr><td>Stock final</td><td class="n">${money(G.phases[0].sim.final)}</td><td class="n">${money(G.phases[1].sim.final)}</td></tr></table>` : '';
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Mission terminée">
+    <h2>${stars === 3 ? 'Sans faute !' : stars === 2 ? 'Bien joué !' : 'Mission terminée'}</h2>
+    <div class="big-stars">${starsHtml(stars)}</div>
+    <p><b class="num">+${G.gained}</b> points · ${G.errors} erreur${G.errors > 1 ? 's' : ''}</p>${cmp}
+    <p>${stars < 3 ? 'Rejoue pour décrocher les 3 étoiles : zéro erreur.' : 'Fiche parfaite. Ton comptable serait fier.'}</p>
+    <div class="row">
+      <button class="btn ghost" id="mHome">Missions</button>
+      <button class="btn ghost" id="mAgain">${m.defi ? 'Nouveau défi' : 'Rejouer'}</button>
+      ${nextIdx >= 0 ? `<button class="btn" id="mNext">Mission ${nextIdx + 1} →</button>` : ''}
+    </div></div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  $('mHome').onclick = () => { close(); home(); };
+  $('mAgain').onclick = () => { close(); m.defi ? startMission(genDefi(G.defiMethod), -1, G.defiMethod) : startMission(m, G.idx); };
+  if (nextIdx >= 0) $('mNext').onclick = () => { close(); startMission(MISSIONS[nextIdx], nextIdx); };
+  (($('mNext')) || $('mHome')).focus();
+}
+
+function startQuiz() {
+  G = null; location.hash = 'quiz';
+  const qs = shuffle(QUIZ).slice(0, 10);
+  const Z = { qs, i: 0, good: 0, pts: 0 };
+  const show = () => {
+    clearInterval(quizTimer);
+    if (Z.i >= qs.length) return endQuiz(Z);
+    const [q, opts, ans, why] = qs[Z.i];
+    const optsHtml = opts.map((o, k) => `<button class="choice" data-k="${k}">${esc(o)}</button>`).join('');
+    app.innerHTML = `<div class="quiz">
+      <div class="mhead"><button class="btn ghost" data-go="home">← Accueil</button><span class="chip duel">Quiz éclair</span><h2>Question ${Z.i + 1}/10</h2></div>
+      <div class="qcard" id="qcard"><div class="qk">Score : ${Z.good} bonne${Z.good > 1 ? 's' : ''} réponse${Z.good > 1 ? 's' : ''}</div><h3>${esc(q)}</h3>
+        <div class="timer"><i id="tbar"></i></div>
+        <div class="${opts.length === 2 ? 'vf' : 'choices'}">${optsHtml}</div><div id="fb"></div></div></div>`;
+    let left = 20, done = false; const bar = $('tbar');
+    const answer = k => {
+      if (done) return; done = true; clearInterval(quizTimer);
+      const ok = k === ans;
+      app.querySelectorAll('.choice').forEach(c => { c.disabled = true; if (+c.dataset.k === ans) c.classList.add('good'); });
+      if (k >= 0 && !ok) app.querySelector(`.choice[data-k="${k}"]`).classList.add('badc');
+      let g = 0;
+      if (ok) { Z.good++; g = 20 + Math.round(left) * 2; Z.pts += g; P.pts += g; P.streak++; P.best = Math.max(P.best, P.streak); award('premier'); chime([660, 990]); }
+      else { P.streak = 0; chime([200, 150], 'triangle'); }
+      save(); updateStats(ok); checkBadges();
+      $('qcard').insertAdjacentHTML('beforeend', `<span class="stamp ${ok ? 'ok' : 'ko'}">${ok ? 'JUSTE' : k < 0 ? 'TEMPS !' : 'RATÉ'}</span>`);
+      $('fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'ko'}">${ok ? `<b>Oui !</b> <span class="gain">+${g} pts</span>` : '<b>Non.</b>'} ${esc(why)}</div>
+        <div class="next-row"><button class="btn" id="nextBtn">${Z.i + 1 < qs.length ? 'Question suivante →' : 'Résultat'}</button></div>`;
+      $('nextBtn').onclick = () => { Z.i++; show(); }; $('nextBtn').focus({ preventScroll: true });
+    };
+    app.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(+b.dataset.k));
+    quizTimer = setInterval(() => { left -= 0.1; bar.style.width = Math.max(0, left / 20 * 100) + '%'; if (left <= 0) answer(-1); }, 100);
+    scrollTo(0, 0);
+  };
+  show();
+}
+function endQuiz(Z) {
+  if (Z.good >= 8) award('quiz');
+  if (Z.good >= 7) confetti();
+  app.innerHTML = `<div class="quiz"><div class="qcard" style="text-align:center">
+    <div class="qk">Quiz éclair terminé</div><h3 style="font-size:2.4rem">${Z.good}/10</h3>
+    <p><b class="num">+${Z.pts}</b> points. ${Z.good >= 8 ? 'Réflexes de pro.' : Z.good >= 5 ? 'Pas mal ! Un tour par le mémo et tu passes la barre des 8.' : 'Relis le mémo, puis retente ta chance.'}</p>
+    <div class="row" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+      <button class="btn ghost" data-go="home">Accueil</button><button class="btn ghost" data-go="memo">Mémo</button><button class="btn" data-go="quiz">Rejouer</button></div></div></div>`;
+}
+
+function memo() {
+  clearInterval(quizTimer); G = null; location.hash = 'memo';
+  const ex = MISSIONS[5], a = simulate('PEPS', ex.ops, 'sacs'), b = simulate('CMUP', ex.ops, 'sacs');
+  app.innerHTML = `
+  <div class="mhead"><button class="btn ghost" data-go="home">← Accueil</button><h2>Mémo : valoriser un stock</h2>
+    <p class="story">Valoriser un stock, c'est donner un prix aux marchandises qui sortent et à celles qui restent. Quand on a acheté à des prix différents, il faut une règle. En voici deux.</p></div>
+  <div class="memo">
+    <article><span class="chip">PEPS · FIFO</span><h3>Premier entré, premier sorti</h3>
+      <p>Chaque livraison forme un <b>lot</b> qui garde son prix. Les sorties prennent d'abord le lot <b>le plus ancien</b>, puis le suivant.</p>
+      <div class="formula">Sortie = Σ (quantité prise dans le lot × prix du lot)<br>Stock final = Σ (lots restants × leur prix)</div>
+      ${rackHtml([{ q: 10, pu: 100, d: '01/10' }, { q: 30, pu: 120, d: '05/10' }], 'PEPS', { first: true, take: [0, 1] })}
+      <p>Sortie de 20 sacs : 10 × 100 + 10 × 120 = <b class="num">${money(2200)}</b></p>
+    </article>
+    <article><span class="chip cmup">CMUP</span><h3>Coût moyen unitaire pondéré</h3>
+      <p><b>Après chaque entrée</b>, on fond l'ancien stock et l'entrée en un seul prix moyen. Les sorties partent à ce prix. Une sortie <b>ne change pas</b> le CMUP.</p>
+      <div class="formula">CMUP = (valeur du stock + valeur de l'entrée)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;÷ (quantité en stock + quantité entrée)</div>
+      ${rackHtml([{ q: 40, pu: 115, d: 'mélangé' }], 'CMUP')}
+      <p>(10 × 100 + 30 × 120) ÷ 40 = 4 600 ÷ 40 = <b class="num">${money(115)}</b>. Sortie de 20 sacs : 20 × 115 = <b class="num">${money(2300)}</b></p>
+      <p><small>Variante : le <b>CMUP de fin de période</b> se calcule une seule fois avec le stock initial et toutes les entrées du mois.</small></p>
+    </article>
+    <article class="wide"><h3>Qui gagne quand les prix montent ?</h3>
+      <p>Même exemple (café à 100, 120 puis 130 € le sac), les deux méthodes côte à côte :</p>
+      <div class="tscroll"><table class="cmp"><tr><th></th><th>PEPS</th><th>CMUP</th><th>À retenir</th></tr>
+        <tr><td>Coût des sorties</td><td class="n">${money(a.totalOut)}</td><td class="n">${money(b.totalOut)}</td><td>PEPS sort les vieux lots, moins chers</td></tr>
+        <tr><td>Stock final</td><td class="n">${money(a.final)}</td><td class="n">${money(b.final)}</td><td>PEPS garde les lots récents, plus chers</td></tr>
+        <tr><td>Bénéfice</td><td>plus élevé</td><td>plus faible</td><td>Si les prix baissent, c'est l'inverse</td></tr></table></div>
+      <div class="hero-actions"><button class="btn" data-go="mission:${nextMissionIdx()}">Passer à la pratique</button><button class="btn ghost" data-go="quiz">Tester avec le quiz</button></div>
+    </article>
+  </div>`;
+  scrollTo(0, 0);
+}
+
+$('homeBtn').onclick = home;
+$('cur').value = CUR;
+$('cur').onchange = e => {
+  CUR = e.target.value; P.cur = CUR; save();
+  if (G) { const b = buildMission(G.m); G.phases = b.phases; G.steps = b.steps; renderMission(); }
+  else if (location.hash === '#memo') memo(); else if (location.hash !== '#quiz') home();
+};
+const sb = $('soundBtn');
+const syncSound = () => { sb.textContent = 'Son : ' + (P.sound ? 'oui' : 'non'); sb.setAttribute('aria-pressed', P.sound); };
+sb.onclick = () => { P.sound = !P.sound; save(); syncSound(); };
+syncSound(); updateStats();
+const h = location.hash.replace('#', '');
+if (h === 'memo') memo(); else if (h === 'quiz') startQuiz();
+else if (/^mission-[1-6]$/.test(h)) { const i = +h.split('-')[1] - 1; startMission(MISSIONS[i], i); }
+else home();
+</script>
+</body></html>
